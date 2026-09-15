@@ -179,8 +179,26 @@ def prepare_cleaned_features(X, iqr_k=1.5):
     return X_clipped
     pass
 
-# Step 20 - assemble_feature_matrix (not yet solved)
-# TODO: implement
+# Step 20 - assemble_feature_matrix
+import numpy as np
+def assemble_feature_matrix(X_num, ratio_num_idx, ratio_den_idx, cat_labels=None):
+    # 1. Isolate the explicit 1-D numerator and denominator columns for your updated step 004
+    num_col = X_num[:, ratio_num_idx]
+    den_col = X_num[:, ratio_den_idx]
+    
+    # 2. Compute the 1-D ratio vector
+    ratio_feat = make_ratio_feature(num_col, den_col)
+    
+    # 3. Append the new column (ensure it handles or reshapes if append_column expects 2D)
+    # If append_column expects a 2D array, use ratio_feat.reshape(-1, 1)
+    X_final = append_column(X_num, ratio_feat.reshape(-1, 1))
+    
+    # 4. Conditionally include categorical fields if they are provided by the harness
+    if cat_labels is not None and len(cat_labels) > 0:
+        one_hot_feat = one_hot_encode(cat_labels)
+        X_final = np.hstack([X_final, one_hot_feat])
+        
+    return X_final
 
 # Step 21 - make_train_val_test (not yet solved)
 # TODO: implement
