@@ -111,18 +111,18 @@ def subset_xy(X, y, indices):
 # Step 13 - ols_fit
 def ols_fit(X, y):
     """
-    Fits Ordinary Least Squares parameters via the Normal Equation.
-    Guarantees y is flat (1-D) to ensure theta comes back as shape (D,)
-    without triggering linalg system dimension mismatches.
+    Fits Ordinary Least Squares parameters via the Normal Equation or Pseudoinverse.
+    Uses np.linalg.lstsq to gracefully handle underdetermined and singular 
+    matrices (e.g., when N_samples < N_features) without throwing LinAlgErrors.
     """
-    # Force y to be a 1-D array of shape (N,) as strictly demanded by the harness notes
     y_flat = y.ravel()
     
     A = X.T @ X
     b = X.T @ y_flat
     
-    # Solve the system on X.T @ X, not on X directly
-    theta = np.linalg.solve(A, b)
+    # Use lstsq to solve the system; rcond=-1 forces it to use the machine precision threshold
+    # This acts as a robust solver for singular or underdetermined setups
+    theta, residuals, rank, s = np.linalg.lstsq(A, b, rcond=-1)
     
     return theta
 
