@@ -110,9 +110,21 @@ def subset_xy(X, y, indices):
 
 # Step 13 - ols_fit
 def ols_fit(X, y):
-    # TODO: return the ordinary-least-squares weight vector for a linear model.
-    return np.linalg.solve(X.T @ X, X.T @ y)
-    pass
+    """
+    Fits Ordinary Least Squares parameters via the Normal Equation.
+    Guarantees y is flat (1-D) to ensure theta comes back as shape (D,)
+    without triggering linalg system dimension mismatches.
+    """
+    # Force y to be a 1-D array of shape (N,) as strictly demanded by the harness notes
+    y_flat = y.ravel()
+    
+    A = X.T @ X
+    b = X.T @ y_flat
+    
+    # Solve the system on X.T @ X, not on X directly
+    theta = np.linalg.solve(A, b)
+    
+    return theta
 
 # Step 14 - ols_predict
 def ols_predict(X, theta):
@@ -264,6 +276,44 @@ def evaluate_predictions(y_true, y_pred):
         "residual_summary": residual_summary(y_true, y_pred)
     }
 
-# Step 24 - house_price_pipeline (not yet solved)
-# TODO: implement
+# Step 24 - house_price_pipeline
+def house_price_pipeline(X, y, ratio_num_idx, ratio_den_idx, cat_labels=None, train_ratio=0.7, val_ratio=0.15, seed=42, iqr_k=1.5):
+    """
+    Orchestrates the entire end-to-end NumPy tabular house-price regression pipeline,
+    passing dictionaries between steps and executing OLS via the normal equation.
+    """
+    # 1. Clean missing features and bound outliers
+    X_cleaned = prepare_cleaned_features(X, iqr_k)
+    
+    # 2. Compute the interaction terms and append categorical expansions
+    X_assembled = assemble_feature_matrix(X_cleaned, ratio_num_idx, ratio_den_idx, cat_labels)
+    
+    # 3. Create the data splits (Step 021 returns a single dictionary)
+    splits = make_train_val_test(
+        X_assembled, y, train_ratio, val_ratio, seed
+    )
+    
+    # 4. Standardize the data partitions (Pass the splits dict directly as 1 argument)
+    std_splits, mean_vec, std_vec = standardize_and_add_bias(splits)
+    
+    # 5. Fit the OLS parameters on the standardized training data via the Normal Equation
+    theta = ols_fit(std_splits["X_train"], std_splits["y_train"])
+    
+    # 6. Generate linear predictions across the folds using matrix multiplication
+    y_train_pred = ols_predict(std_splits["X_train"], theta)
+    y_val_pred   = ols_predict(std_splits["X_val"], theta)
+    y_test_pred  = ols_predict(std_splits["X_test"], theta)
+    
+    # 7. Collect evaluation reports across validation and test partitions
+    val_metrics  = evaluate_predictions(std_splits["y_val"], y_val_pred)
+    test_metrics = evaluate_predictions(std_splits["y_test"], y_test_pred)
+    
+    # 8. Return the output dictionary using the exact keys expected by the platform
+    return {
+        "theta": theta,
+        "val_metrics": val_metrics,
+        "test_metrics": test_metrics,
+        "y_test": std_splits["y_test"],
+        "y_test_pred": y_test_pred
+    }
 
