@@ -219,8 +219,41 @@ def make_train_val_test(X, y, train_ratio, val_ratio, seed):
         "y_test": y_test
     }
 
-# Step 22 - standardize_and_add_bias (not yet solved)
-# TODO: implement
+# Step 22 - standardize_and_add_bias
+def standardize_and_add_bias(splits):
+    """
+    Fits standardisation arrays on the training features only, applies them 
+    across all sets, prepends a bias column, and outputs the transformed dictionary 
+    alongside the calibration vectors.
+    
+    Returns a triple: (std_splits, mean, std)
+    """
+    # 1. Extract the raw arrays from the splits dictionary
+    X_train = splits["X_train"]
+    X_val   = splits["X_val"]
+    X_test  = splits["X_test"]
+    
+    # 2. Fit standardisation statistics on the training features only
+    mean, std = fit_standardizer(X_train)
+    
+    # 3. Apply the transformation to every feature matrix fold
+    X_train_scaled = apply_standardizer(X_train, mean, std)
+    X_val_scaled   = apply_standardizer(X_val, mean, std)
+    X_test_scaled  = apply_standardizer(X_test, mean, std)
+    
+    # 4. Prepend the intercept bias column to each scaled feature space
+    # Create a new dictionary to house the standardized and biased splits
+    std_splits = {
+        "X_train": add_bias_column(X_train_scaled),
+        "y_train": splits["y_train"],
+        "X_val":   add_bias_column(X_val_scaled),
+        "y_val":   splits["y_val"],
+        "X_test":  add_bias_column(X_test_scaled),
+        "y_test":  splits["y_test"]
+    }
+    
+    # 5. Return the exact triple format requested by the platform
+    return std_splits, mean, std
 
 # Step 23 - evaluate_predictions (not yet solved)
 # TODO: implement
