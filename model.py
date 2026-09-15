@@ -20,8 +20,14 @@ def impute_nan_with_mean(X):
             X_clean[nan_mask, j] = mean_val
     return X_clean
 
-# Step 2 - compute_iqr_bounds (not yet solved)
-# TODO: implement
+# Step 2 - compute_iqr_bounds
+def compute_iqr_bounds(X, k=1.5):
+    q25 = np.percentile(X, 25, axis=0)
+    q75 = np.percentile(X, 75, axis=0)
+    iqr = q75 - q25
+    lower_bounds = q25 - k * iqr
+    upper_bounds = q75 + k * iqr
+    return lower_bounds, upper_bounds
 
 # Step 3 - clip_columns (not yet solved)
 # TODO: implement
