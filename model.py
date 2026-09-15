@@ -84,7 +84,8 @@ def add_bias_column(X):
 # Step 10 - make_shuffled_indices
 def make_shuffled_indices(n_samples, seed):
     # TODO: Create a reproducibly shuffled permutation of row indices.
-    rng = np.random.default_rng(seed)
+    # rng = np.random.default_rng(seed)
+    rng = np.random.RandomState(seed)
     return rng.permutation(n_samples)
     pass
 
@@ -200,8 +201,23 @@ def assemble_feature_matrix(X_num, ratio_num_idx, ratio_den_idx, cat_labels=None
         
     return X_final
 
-# Step 21 - make_train_val_test (not yet solved)
-# TODO: implement
+# Step 21 - make_train_val_test
+def make_train_val_test(X, y, train_ratio, val_ratio, seed):
+    shuffled_idx = make_shuffled_indices(len(X), seed)
+    tr_idx, val_idx, te_idx = partition_indices(shuffled_idx, train_ratio, val_ratio)
+    
+    X_train, y_train = subset_xy(X, y, tr_idx)
+    X_val, y_val = subset_xy(X, y, val_idx)
+    X_test, y_test = subset_xy(X, y, te_idx)
+    
+    return {
+        "X_train": X_train,
+        "y_train": y_train,
+        "X_val": X_val,
+        "y_val": y_val,
+        "X_test": X_test,
+        "y_test": y_test
+    }
 
 # Step 22 - standardize_and_add_bias (not yet solved)
 # TODO: implement
